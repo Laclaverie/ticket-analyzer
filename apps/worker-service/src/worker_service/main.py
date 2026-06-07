@@ -33,6 +33,7 @@ def main() -> None:
         processor,
         poll_interval_seconds=settings.poll_interval_seconds,
         batch_size=settings.batch_size,
+        retry_delay_seconds=settings.retry_delay_seconds,
     )
 
     logger.info("Starting worker service with processor=%s", processor.name)

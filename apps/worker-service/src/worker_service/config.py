@@ -8,3 +8,4 @@ class Settings(BaseSettings):
     processor_kind: str = "ocr"
     poll_interval_seconds: float = 5.0
     batch_size: int = 10
+    retry_delay_seconds: float = 30.0

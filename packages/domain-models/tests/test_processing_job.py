@@ -17,6 +17,9 @@ def _make_job(**kwargs) -> ProcessingJob:
         receipt_id="receipt-1",
         status=ProcessingStatus.PENDING,
         error_message=None,
+        retry_count=0,
+        max_attempts=3,
+        next_retry_at=None,
         created_at=now,
         updated_at=now,
     )

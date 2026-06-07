@@ -26,7 +26,9 @@ services:
     environment:
       - DATABASE_URL=sqlite:////app/data/ticket_analyzer.db
       - STORAGE_PATH=/app/data/images
+      - PROCESSOR_KIND=ocr
       - POLL_INTERVAL_SECONDS=5
+      - RETRY_DELAY_SECONDS=30
     depends_on:
       api:
         condition: service_healthy

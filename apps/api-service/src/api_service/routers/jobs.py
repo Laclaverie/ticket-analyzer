@@ -18,6 +18,9 @@ def get_job(job_id: str, db: DbDep = None) -> JobStatusResponse:
         receipt_id=job.receipt_id,
         status=job.status.value,
         error_message=job.error_message,
+        retry_count=job.retry_count,
+        max_attempts=job.max_attempts,
+        next_retry_at=job.next_retry_at,
         created_at=job.created_at,
         updated_at=job.updated_at,
     )

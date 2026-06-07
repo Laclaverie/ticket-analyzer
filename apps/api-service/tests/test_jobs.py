@@ -14,6 +14,8 @@ def test_get_job_returns_pending_status(client):
     assert data["id"] == job_id
     assert data["status"] == "pending"
     assert data["error_message"] is None
+    assert data["retry_count"] == 0
+    assert data["max_attempts"] == 3
 
 
 def test_get_job_returns_receipt_id(client):
@@ -26,6 +28,19 @@ def test_get_job_returns_receipt_id(client):
 
     response = client.get(f"/jobs/{job_id}")
     assert response.json()["receipt_id"] == receipt_id
+
+
+def test_get_job_includes_retry_metadata(client):
+    upload = client.post(
+        "/receipts/upload",
+        files={"file": ("r.jpg", io.BytesIO(b"img"), "image/jpeg")},
+    )
+    job_id = upload.json()["job_id"]
+
+    data = client.get(f"/jobs/{job_id}").json()
+    assert "retry_count" in data
+    assert "max_attempts" in data
+    assert "next_retry_at" in data
 
 
 def test_get_job_returns_404_for_unknown(client):

@@ -89,7 +89,9 @@ def test_poll_once_marks_job_failed_when_processor_raises(db_session, receipt):
 
     db_session.refresh(job)
     assert count == 1
-    assert job.status == "failed"
+    assert job.status == "pending"
+    assert job.retry_count == 1
+    assert job.next_retry_at is not None
     assert "boom" in (job.error_message or "")
 
 

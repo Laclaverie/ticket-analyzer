@@ -19,10 +19,19 @@ class JobRepository:
     def __init__(self, db: Session) -> None:
         self._db = db
 
-    def find_pending(self, limit: int = 10) -> list[ProcessingJob]:
+    def find_pending(
+        self,
+        limit: int = 10,
+        now: Optional[datetime] = None,
+    ) -> list[ProcessingJob]:
+        current_time = now or datetime.now(timezone.utc)
         orms = (
             self._db.query(ProcessingJobORM)
             .filter(ProcessingJobORM.status == ProcessingStatus.PENDING.value)
+            .filter(
+                (ProcessingJobORM.next_retry_at.is_(None))
+                | (ProcessingJobORM.next_retry_at <= current_time)
+            )
             .limit(limit)
             .all()
         )
@@ -37,6 +46,20 @@ class JobRepository:
     def mark_failed(self, job_id: str, error_message: str) -> None:
         self._update_status(job_id, ProcessingStatus.FAILED, error_message)
 
+    def schedule_retry(
+        self,
+        job_id: str,
+        error_message: str,
+        next_retry_at: datetime,
+    ) -> None:
+        job = self._db.get(ProcessingJobORM, job_id)
+        if job:
+            job.status = ProcessingStatus.PENDING.value
+            job.error_message = error_message
+            job.retry_count += 1
+            job.next_retry_at = next_retry_at
+            job.updated_at = datetime.now(timezone.utc)
+
     def _update_status(
         self,
         job_id: str,
@@ -47,6 +70,8 @@ class JobRepository:
         if job:
             job.status = status.value
             job.error_message = error_message
+            if status in {ProcessingStatus.COMPLETED, ProcessingStatus.FAILED}:
+                job.next_retry_at = None
             job.updated_at = datetime.now(timezone.utc)
 
     @staticmethod
@@ -56,6 +81,9 @@ class JobRepository:
             receipt_id=orm.receipt_id,
             status=ProcessingStatus(orm.status),
             error_message=orm.error_message,
+            retry_count=orm.retry_count,
+            max_attempts=orm.max_attempts,
+            next_retry_at=orm.next_retry_at,
             created_at=orm.created_at,
             updated_at=orm.updated_at,
         )

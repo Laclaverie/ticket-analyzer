@@ -24,6 +24,9 @@ class JobRepository:
             id=str(uuid.uuid4()),
             receipt_id=receipt_id,
             status=ProcessingStatus.PENDING.value,
+            retry_count=0,
+            max_attempts=3,
+            next_retry_at=None,
             created_at=now,
             updated_at=now,
         )
@@ -42,6 +45,9 @@ class JobRepository:
             receipt_id=orm.receipt_id,
             status=ProcessingStatus(orm.status),
             error_message=orm.error_message,
+            retry_count=orm.retry_count,
+            max_attempts=orm.max_attempts,
+            next_retry_at=orm.next_retry_at,
             created_at=orm.created_at,
             updated_at=orm.updated_at,
         )
