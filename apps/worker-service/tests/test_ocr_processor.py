@@ -2,6 +2,7 @@ from persistence.models.processing_job import ProcessingJobORM
 from persistence.models.receipt import ReceiptImageORM, ReceiptORM
 from persistence.models.receipt_item import ReceiptItemNormalizedORM, ReceiptItemRawORM
 from parsing_core.parser import ReceiptLineParser
+from taxonomy_core.classifier import BaseClassifier, ClassificationResult
 from worker_service.processors.ocr_client import BaseOcrClient
 from worker_service.processors.ocr_processor import OcrProcessor
 
@@ -12,6 +13,26 @@ class FakeOcrClient(BaseOcrClient):
 
     def extract_text(self, image_path: str) -> str:
         return self._text
+
+
+class FakeClassifier(BaseClassifier):
+    """Always returns the same fixed category for deterministic tests."""
+
+    def classify(self, name: str) -> ClassificationResult:
+        return ClassificationResult(
+            category_id="food-fresh-dairy",
+            confidence=0.9,
+            origin="rule",
+        )
+
+
+def _make_processor(db_session, ocr_text: str) -> OcrProcessor:
+    return OcrProcessor(
+        db_session,
+        FakeOcrClient(ocr_text),
+        ReceiptLineParser(),
+        FakeClassifier(),
+    )
 
 
 def _make_receipt_with_job(db_session, image_path: str = "/tmp/receipt.jpg") -> ProcessingJobORM:
@@ -29,17 +50,13 @@ def _make_receipt_with_job(db_session, image_path: str = "/tmp/receipt.jpg") -> 
 
 
 def test_ocr_processor_name(db_session):
-    processor = OcrProcessor(db_session, FakeOcrClient("milk"), ReceiptLineParser())
+    processor = _make_processor(db_session, "milk")
     assert processor.name == "ocr"
 
 
 def test_ocr_processor_persists_rows_from_lines(db_session):
     job = _make_receipt_with_job(db_session)
-    processor = OcrProcessor(
-        db_session,
-        FakeOcrClient("Milk 2.99\nTomato 2 x 1.49 2.98\n"),
-        ReceiptLineParser(),
-    )
+    processor = _make_processor(db_session, "Milk 2.99\nTomato 2 x 1.49 2.98\n")
 
     processor.process(job.id)
     db_session.flush()
@@ -69,11 +86,13 @@ def test_ocr_processor_persists_rows_from_lines(db_session):
     assert str(tomato_item.line_total) == "2.98"
     assert str(tomato_item.quantity) == "2.000"
     assert str(tomato_item.unit_price) == "1.49"
+    assert milk_item.category_id == "food-fresh-dairy"
+    assert tomato_item.category_id == "food-fresh-dairy"
 
 
 def test_ocr_processor_uses_fallback_when_text_empty(db_session):
     job = _make_receipt_with_job(db_session, image_path="/tmp/costco-ticket.jpg")
-    processor = OcrProcessor(db_session, FakeOcrClient("\n\n"), ReceiptLineParser())
+    processor = _make_processor(db_session, "\n\n")
 
     processor.process(job.id)
     db_session.flush()
@@ -96,7 +115,7 @@ def test_ocr_processor_raises_when_image_missing(db_session):
     db_session.add(job)
     db_session.commit()
 
-    processor = OcrProcessor(db_session, FakeOcrClient("any"), ReceiptLineParser())
+    processor = _make_processor(db_session, "any")
 
     try:
         processor.process(job.id)

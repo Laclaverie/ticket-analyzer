@@ -12,6 +12,7 @@ dependencies = [
     "domain-models",
     "parsing-core",
     "persistence",
+    "taxonomy-core",
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -21,6 +22,7 @@ packages = ["src/worker_service"]
 domain-models = { workspace = true }
 parsing-core = { workspace = true }
 persistence = { workspace = true }
+taxonomy-core = { workspace = true }
 
 [dependency-groups]
 dev = [

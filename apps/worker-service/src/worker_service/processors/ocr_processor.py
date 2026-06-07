@@ -6,23 +6,26 @@ from parsing_core.parser import ReceiptLineParser
 from persistence.models.processing_job import ProcessingJobORM
 from persistence.models.receipt import ReceiptORM
 from persistence.models.receipt_item import ReceiptItemNormalizedORM, ReceiptItemRawORM
+from taxonomy_core.classifier import BaseClassifier
 
 from worker_service.processors.base import BaseProcessor
 from worker_service.processors.ocr_client import BaseOcrClient
 
 
 class OcrProcessor(BaseProcessor):
-    """OCR-backed processor that persists raw and normalized placeholders."""
+    """OCR-backed processor that persists raw and normalized items with category assignment."""
 
     def __init__(
         self,
         db: Session,
         ocr_client: BaseOcrClient,
         line_parser: ReceiptLineParser,
+        classifier: BaseClassifier,
     ) -> None:
         self._db = db
         self._ocr_client = ocr_client
         self._line_parser = line_parser
+        self._classifier = classifier
 
     @property
     def name(self) -> str:
@@ -78,14 +81,15 @@ class OcrProcessor(BaseProcessor):
             self._db.flush()
 
             parsed = self._line_parser.parse_line(line)
+            classification = self._classifier.classify(parsed.normalized_name)
             normalized = ReceiptItemNormalizedORM(
                 receipt_item_raw_id=raw_item.id,
                 normalized_name=parsed.normalized_name,
                 quantity=parsed.quantity,
                 unit_price=parsed.unit_price,
                 line_total=parsed.line_total,
-                category_id=None,
-                confidence=parsed.confidence,
-                classification_origin="rule",
+                category_id=classification.category_id,
+                confidence=classification.confidence,
+                classification_origin=classification.origin,
             )
             self._db.add(normalized)
