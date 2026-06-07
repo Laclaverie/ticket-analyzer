@@ -11,6 +11,7 @@ resolution-markers = [
 members = [
     "api-service",
     "domain-models",
+    "parsing-core",
     "persistence",
     "taxonomy-core",
     "worker-service",
@@ -666,6 +667,25 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/d7/f1/e7a6dd94a8d4a5626c03e4e99c87f241ba9e350cd9e6d75123f992427270/packaging-26.2.tar.gz", hash = "sha256:ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661", size = 228134, upload-time = "2026-04-24T20:15:23.917Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/df/b2/87e62e8c3e2f4b32e5fe99e0b86d576da1312593b39f47d8ceef365e95ed/packaging-26.2-py3-none-any.whl", hash = "sha256:5fc45236b9446107ff2415ce77c807cee2862cb6fac22b8a73826d0693b0980e", size = 100195, upload-time = "2026-04-24T20:15:22.081Z" },
+]
+
+[[package]]
+name = "parsing-core"
+version = "0.1.0"
+source = { editable = "packages/parsing-core" }
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-cov" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "pytest-cov", specifier = ">=5.0" },
 ]
 
 [[package]]
@@ -1361,6 +1381,7 @@ version = "0.1.0"
 source = { editable = "apps/worker-service" }
 dependencies = [
     { name = "domain-models" },
+    { name = "parsing-core" },
     { name = "persistence" },
     { name = "pydantic-settings" },
     { name = "sqlalchemy" },
@@ -1375,6 +1396,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "domain-models", editable = "packages/domain-models" },
+    { name = "parsing-core", editable = "packages/parsing-core" },
     { name = "persistence", editable = "packages/persistence" },
     { name = "pydantic-settings", specifier = ">=2.0" },
     { name = "sqlalchemy", specifier = ">=2.0" },
