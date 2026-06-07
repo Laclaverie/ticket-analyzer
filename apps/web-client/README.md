@@ -1,11 +1,21 @@
 # web-client
 
-Desktop-focused browser client.
+Desktop-first browser client for Ticket Analyzer.
+
+Stack:
+- React
+- TypeScript
+- Vite
 
 Responsibilities:
-- Advanced analytics exploration
-- Filtering and comparison views
-- Data export workflows
+- Receipt list and detail inspection
+- Category and monthly analytics views
+- CSV export workflows
 
-Planned stack:
-- Web app implementation pending final framework selection
+Local development:
+1. Install Node dependencies from `apps/web-client`.
+2. Start the API service.
+3. Run `npm run dev`.
+
+Optional env var:
+- `VITE_API_BASE_URL` points to the FastAPI backend, defaulting to `http://localhost:8000`.
