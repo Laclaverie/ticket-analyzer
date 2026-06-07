@@ -40,6 +40,9 @@ class JobPoller:
 
         for job in jobs:
             try:
+                self._job_repo.mark_in_progress(job.id)
+                self._db.commit()
+
                 self._processor.process(job.id)
                 self._job_repo.mark_completed(job.id)
                 self._db.commit()

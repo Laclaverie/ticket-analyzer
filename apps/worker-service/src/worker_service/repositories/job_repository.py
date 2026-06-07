@@ -31,6 +31,9 @@ class JobRepository:
     def mark_completed(self, job_id: str) -> None:
         self._update_status(job_id, ProcessingStatus.COMPLETED)
 
+    def mark_in_progress(self, job_id: str) -> None:
+        self._update_status(job_id, ProcessingStatus.IN_PROGRESS)
+
     def mark_failed(self, job_id: str, error_message: str) -> None:
         self._update_status(job_id, ProcessingStatus.FAILED, error_message)
 
