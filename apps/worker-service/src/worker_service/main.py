@@ -7,7 +7,7 @@ import persistence.models  # noqa: F401
 
 from worker_service.config import Settings
 from worker_service.poller import JobPoller
-from worker_service.processors.stub_processor import StubProcessor
+from worker_service.processor_factory import create_processor
 
 logging.basicConfig(
     level=logging.INFO,
@@ -27,7 +27,7 @@ def main() -> None:
     factory = create_session_factory(engine)
     db = factory()
 
-    processor = StubProcessor(db)
+    processor = create_processor(db, settings.processor_kind)
     poller = JobPoller(
         db,
         processor,
@@ -35,7 +35,7 @@ def main() -> None:
         batch_size=settings.batch_size,
     )
 
-    logger.info("Starting worker service...")
+    logger.info("Starting worker service with processor=%s", processor.name)
     poller.run()
 
 
