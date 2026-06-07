@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from api_service.database import create_all_tables
 from api_service.config import Settings
-from api_service.routers import health, receipts, jobs
+from api_service.routers import health, receipts, jobs, analytics
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -26,6 +26,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(health.router)
     app.include_router(receipts.router)
     app.include_router(jobs.router)
+    app.include_router(analytics.router)
     return app
 
 

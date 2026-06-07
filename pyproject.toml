@@ -3,6 +3,7 @@
 
 [tool.uv.workspace]
 members = [
+    "packages/analytics-core",
     "packages/domain-models",
     "packages/taxonomy-core",
     "packages/parsing-core",
