@@ -76,6 +76,10 @@ class JobRepository:
 
     @staticmethod
     def _to_domain(orm: ProcessingJobORM) -> ProcessingJob:
+        next_retry_at = orm.next_retry_at
+        if next_retry_at is not None and next_retry_at.tzinfo is None:
+            next_retry_at = next_retry_at.replace(tzinfo=timezone.utc)
+
         return ProcessingJob(
             id=orm.id,
             receipt_id=orm.receipt_id,
@@ -83,7 +87,7 @@ class JobRepository:
             error_message=orm.error_message,
             retry_count=orm.retry_count,
             max_attempts=orm.max_attempts,
-            next_retry_at=orm.next_retry_at,
+            next_retry_at=next_retry_at,
             created_at=orm.created_at,
             updated_at=orm.updated_at,
         )
