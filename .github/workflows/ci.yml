@@ -1,0 +1,28 @@
+name: ci
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  quality-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate repository structure
+        run: |
+          test -d apps
+          test -d packages
+          test -d db
+          test -d infra
+          test -d tests
+          test -f doc/ARCHITECTURE.md
+          test -f doc/ADR/README.md
+
+      - name: Placeholder quality gate
+        run: |
+          echo "CI baseline initialized."
+          echo "Replace with lint, typecheck, unit, functional, and contract jobs per ADR-005."
