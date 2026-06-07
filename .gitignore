@@ -52,7 +52,6 @@ target/
 *.swp
 
 # Data/runtime artifacts
-data/
 artifacts/
 uploads/
 .sqlite
@@ -69,3 +68,6 @@ uploads/
 test/
 .vscode/
 .editorconfig
+
+# Misc
+data/images/*

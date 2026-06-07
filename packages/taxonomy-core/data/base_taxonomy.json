@@ -1,0 +1,61 @@
+{
+  "version": "1.0.0",
+  "categories": [
+    {
+      "id": "food",
+      "name": "Food",
+      "slug": "food",
+      "is_food": true,
+      "children": [
+        {
+          "id": "food-fresh",
+          "name": "Fresh Food",
+          "slug": "food-fresh",
+          "is_food": true,
+          "children": [
+            { "id": "food-fresh-fruit-veg", "name": "Fruits & Vegetables", "slug": "food-fresh-fruit-veg", "is_food": true, "children": [] },
+            { "id": "food-fresh-meat-fish", "name": "Meat & Fish",          "slug": "food-fresh-meat-fish",  "is_food": true, "children": [] },
+            { "id": "food-fresh-dairy",     "name": "Dairy & Eggs",         "slug": "food-fresh-dairy",      "is_food": true, "children": [] },
+            { "id": "food-fresh-bread",     "name": "Bread & Bakery",       "slug": "food-fresh-bread",      "is_food": true, "children": [] }
+          ]
+        },
+        {
+          "id": "food-processed",
+          "name": "Processed Food",
+          "slug": "food-processed",
+          "is_food": true,
+          "children": [
+            { "id": "food-processed-canned",       "name": "Canned & Preserved", "slug": "food-processed-canned",       "is_food": true, "children": [] },
+            { "id": "food-processed-frozen",       "name": "Frozen Food",         "slug": "food-processed-frozen",       "is_food": true, "children": [] },
+            { "id": "food-processed-snacks",       "name": "Snacks & Sweets",     "slug": "food-processed-snacks",       "is_food": true, "children": [] },
+            { "id": "food-processed-ready-meals",  "name": "Ready Meals",         "slug": "food-processed-ready-meals",  "is_food": true, "children": [] }
+          ]
+        },
+        {
+          "id": "food-beverages",
+          "name": "Beverages",
+          "slug": "food-beverages",
+          "is_food": true,
+          "children": [
+            { "id": "food-beverages-non-alcoholic", "name": "Non-Alcoholic Drinks", "slug": "food-beverages-non-alcoholic", "is_food": true, "children": [] },
+            { "id": "food-beverages-alcoholic",     "name": "Alcoholic Drinks",     "slug": "food-beverages-alcoholic",     "is_food": true, "children": [] }
+          ]
+        },
+        { "id": "food-condiments", "name": "Condiments & Spices", "slug": "food-condiments", "is_food": true, "children": [] }
+      ]
+    },
+    {
+      "id": "non-food",
+      "name": "Non-Food",
+      "slug": "non-food",
+      "is_food": false,
+      "children": [
+        { "id": "non-food-hygiene",   "name": "Personal Hygiene",      "slug": "non-food-hygiene",   "is_food": false, "children": [] },
+        { "id": "non-food-cleaning",  "name": "Cleaning & Laundry",    "slug": "non-food-cleaning",  "is_food": false, "children": [] },
+        { "id": "non-food-household", "name": "Household Supplies",    "slug": "non-food-household", "is_food": false, "children": [] },
+        { "id": "non-food-clothing",  "name": "Clothing & Accessories","slug": "non-food-clothing",  "is_food": false, "children": [] },
+        { "id": "non-food-other",     "name": "Other",                 "slug": "non-food-other",     "is_food": false, "children": [] }
+      ]
+    }
+  ]
+}
