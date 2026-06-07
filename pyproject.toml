@@ -1,0 +1,20 @@
+# uv workspace root
+# Run `uv sync` from this directory to install all packages and apps.
+
+[tool.uv.workspace]
+members = [
+    "packages/domain-models",
+    "packages/taxonomy-core",
+    "packages/persistence",
+    "apps/api-service",
+    "apps/worker-service",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--import-mode=importlib"

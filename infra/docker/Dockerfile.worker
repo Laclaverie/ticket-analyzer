@@ -1,0 +1,14 @@
+FROM python:3.12-slim
+
+RUN pip install uv
+
+WORKDIR /app
+
+COPY pyproject.toml ./
+COPY packages/ packages/
+COPY apps/worker-service/ apps/worker-service/
+
+RUN uv sync --package worker-service
+
+CMD ["uv", "run", "--package", "worker-service", \
+     "python", "-m", "worker_service.main"]

@@ -1,0 +1,35 @@
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ticket_data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:////app/data/ticket_analyzer.db
+      - STORAGE_PATH=/app/data/images
+      - API_TOKEN=${API_TOKEN:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.worker
+    volumes:
+      - ticket_data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:////app/data/ticket_analyzer.db
+      - STORAGE_PATH=/app/data/images
+      - POLL_INTERVAL_SECONDS=5
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  ticket_data:

@@ -6,23 +6,34 @@ on:
   pull_request:
 
 jobs:
-  quality-gates:
+  unit-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate repository structure
-        run: |
-          test -d apps
-          test -d packages
-          test -d db
-          test -d infra
-          test -d tests
-          test -f doc/ARCHITECTURE.md
-          test -f doc/ADR/README.md
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
 
-      - name: Placeholder quality gate
-        run: |
-          echo "CI baseline initialized."
-          echo "Replace with lint, typecheck, unit, functional, and contract jobs per ADR-005."
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Install workspace dependencies
+        run: uv sync --all-packages
+
+      - name: Run domain-models tests
+        run: uv run --package domain-models pytest packages/domain-models/tests -v
+
+      - name: Run taxonomy-core tests
+        run: uv run --package taxonomy-core pytest packages/taxonomy-core/tests -v
+
+      - name: Run persistence tests
+        run: uv run --package persistence pytest packages/persistence/tests -v
+
+      - name: Run api-service tests
+        run: uv run --package api-service pytest apps/api-service/tests -v
+
+      - name: Run worker-service tests
+        run: uv run --package worker-service pytest apps/worker-service/tests -v

@@ -13,8 +13,17 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.pyre/
+.hypothesis/
+.tox/
+.nox/
 .venv/
 venv/
+.coverage
+.coverage.*
+htmlcov/
+pip-wheel-metadata/
+.ipynb_checkpoints/
 
 # Node/web
 node_modules/
@@ -48,6 +57,7 @@ artifacts/
 uploads/
 .sqlite
 *.sqlite
+*.sqlite3
 *.db
 
 # Env and secrets
