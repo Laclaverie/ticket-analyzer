@@ -65,10 +65,15 @@ export function useDashboardData() {
     loadingReceipt,
     setSelectedReceiptId,
     refreshDashboard: async () => {
-      const snapshot = await loadDashboard();
-      setDashboard(snapshot);
-      setSelectedReceiptId((current) => current ?? snapshot.receipts.items[0]?.id ?? null);
-      return snapshot;
+      setLoadingDashboard(true);
+      try {
+        const snapshot = await loadDashboard();
+        setDashboard(snapshot);
+        setSelectedReceiptId((current) => current ?? snapshot.receipts.items[0]?.id ?? null);
+        return snapshot;
+      } finally {
+        setLoadingDashboard(false);
+      }
     },
   };
 }

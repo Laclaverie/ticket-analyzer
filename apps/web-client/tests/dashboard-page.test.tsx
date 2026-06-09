@@ -1,15 +1,18 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import App from '../src/App';
 
-const { exportReceiptsCsvMock, refreshDashboardMock, setSelectedReceiptIdMock } = vi.hoisted(() => ({
-  exportReceiptsCsvMock: vi.fn(),
-  refreshDashboardMock: vi.fn(),
-  setSelectedReceiptIdMock: vi.fn(),
-}));
+const { exportReceiptsCsvMock, refreshDashboardMock, setSelectedReceiptIdMock, uploadReceiptMock } =
+  vi.hoisted(() => ({
+    exportReceiptsCsvMock: vi.fn(),
+    refreshDashboardMock: vi.fn(),
+    setSelectedReceiptIdMock: vi.fn(),
+    uploadReceiptMock: vi.fn(),
+  }));
 
 vi.mock('../src/api', () => ({
   exportReceiptsCsv: exportReceiptsCsvMock,
+  uploadReceipt: uploadReceiptMock,
 }));
 
 vi.mock('../src/hooks/useDashboardData', () => ({
@@ -105,6 +108,22 @@ describe('DashboardPage', () => {
       total: 1,
       page: 1,
       page_size: 10,
+    });
+  });
+
+  it('triggers file upload when a file is selected', async () => {
+    render(<App />);
+
+    const file = new File(['dummy content'], 'receipt.jpg', { type: 'image/jpeg' });
+    const input = screen.getByLabelText(/Upload receipt image/i);
+
+    await act(async () => {
+      fireEvent.change(input, { target: { files: [file] } });
+    });
+
+    expect(uploadReceiptMock).toHaveBeenCalledWith(file);
+    await vi.waitFor(() => {
+      expect(refreshDashboardMock).toHaveBeenCalledTimes(1);
     });
   });
 });
