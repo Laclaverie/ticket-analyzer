@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { loadDashboard, loadReceiptDetail } from '../src/api';
+import { loadDashboard, loadReceiptDetail, uploadReceipt } from '../src/api';
 
 function okJsonResponse<T>(payload: T): Response {
   return {
@@ -111,5 +111,37 @@ describe('api loaders', () => {
     expect(detail.source).toBe('mock');
     expect(detail.receipt.id).toBe('receipt-demo-2');
     expect(detail.items.length).toBeGreaterThan(0);
+  });
+
+  it('uploads a receipt file successfully', async () => {
+    const fetchMock = vi.mocked(globalThis.fetch).mockResolvedValueOnce({
+      ok: true,
+      status: 201,
+    } as Response);
+
+    const file = new File(['dummy content'], 'receipt.jpg', { type: 'image/jpeg' });
+    await uploadReceipt(file);
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      expect.stringContaining('/receipts/upload'),
+      expect.objectContaining({
+        method: 'POST',
+        body: expect.any(FormData),
+      }),
+    );
+
+    const callBody = fetchMock.mock.calls[0]?.[1]?.body as FormData;
+    expect(callBody.get('file')).toBe(file);
+  });
+
+  it('throws error when upload fails', async () => {
+    vi.mocked(globalThis.fetch).mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+    } as Response);
+
+    const file = new File(['dummy content'], 'receipt.jpg', { type: 'image/jpeg' });
+
+    await expect(uploadReceipt(file)).rejects.toThrow('Upload failed: 400');
   });
 });

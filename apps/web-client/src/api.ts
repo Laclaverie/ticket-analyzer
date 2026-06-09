@@ -268,6 +268,20 @@ export async function loadReceiptDetail(receiptId: string): Promise<ReceiptDetai
   return safeFetchReceiptDetail(receiptId);
 }
 
+export async function uploadReceipt(file: File): Promise<void> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const response = await fetch(buildUrl('/receipts/upload'), {
+    method: 'POST',
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error(`Upload failed: ${response.status}`);
+  }
+}
+
 export function exportReceiptsCsv(receipts: ReceiptListResponse): void {
   const rows = [
     ['id', 'store', 'purchase_date', 'total_amount', 'currency', 'created_at'],
