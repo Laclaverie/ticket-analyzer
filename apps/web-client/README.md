@@ -1,27 +1,46 @@
-# web-client
+# Web Client
 
 Desktop-first browser client for Ticket Analyzer.
 
-Stack:
-- React
-- TypeScript
-- Vite
+## Tech Stack
+- **React 18**
+- **TypeScript**
+- **Vite**
 
-Responsibilities:
-- Receipt list and detail inspection
-- Category and monthly analytics views
-- CSV export workflows
+## Prerequisites
+- Node.js (v18 or newer recommended)
+- npm or yarn
 
-Local development:
-1. Install Node dependencies from `apps/web-client`.
-2. Start the API service.
-3. Run `npm run dev`.
+## Getting Started
 
-Testing:
-1. Unit/integration tests: `npm run test`
-2. Watch mode: `npm run test:watch`
-3. Browser E2E tests: `npm run test:e2e`
-4. First-time Playwright browser install: `npx playwright install chromium`
+1. **Install dependencies**:
+   ```bash
+   npm install
+   ```
 
-Optional env var:
-- `VITE_API_BASE_URL` points to the FastAPI backend, defaulting to `http://localhost:8000`.
+2. **Configuration**:
+   Optionally set `VITE_API_BASE_URL` in your environment (default: `http://localhost:8000`).
+
+3. **Start Development Server**:
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+## Building for Production
+
+To create a production-ready build:
+```bash
+npm run build
+```
+The optimized files will be generated in the `dist/` directory.
+
+To preview the production build locally:
+```bash
+npm run preview
+```
+
+## Testing
+- **Unit/Integration**: `npm run test` (Vitest)
+- **E2E (Playwright)**: `npm run test:e2e`
+- **Install Playwright Browsers**: `npx playwright install chromium` (needed for E2E)
