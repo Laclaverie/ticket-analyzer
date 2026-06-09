@@ -1,0 +1,60 @@
+# Built artifacts
+bin
+gen
+out
+build/
+.gradle/
+
+# Android Studio / IntelliJ
+*.iml
+.idea/
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/assetWizardSettings.xml
+.idea/caches/
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml
+.idea/deploymentTargetDropDown.xml
+
+# External native build artifacts
+.externalNativeBuild
+.cxx
+cmake_install.cmake
+CMakeCache.txt
+CMakeFiles/
+install_manifest.txt
+Makefile
+rules.ninja
+
+# Local configuration file (sdk path, etc)
+local.properties
+
+# Log files
+*.log
+
+# Android Studio Navigation editor temp files
+.navigation/
+
+# Android Studio captures
+captures/
+
+# Keystore files
+*.jks
+*.keystore
+
+# Google Services
+google-services.json
+
+# Bundle tool
+*.apks
+
+# OS X
+.DS_Store
+
+# Java
+*.class
+
+# Kotlin
+.kotlin/
