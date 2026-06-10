@@ -4,7 +4,7 @@ from typing import Optional
 
 from parsing_core.models import ParsedLineItem
 from .stores import StoreType
-from .store_parsers import CostcoParser, IgaParser, BaseStoreParser
+from .parsers import CostcoParser, IgaParser, BaseStoreParser
 
 _QTY_X_UNIT_PATTERN = re.compile(r"(?P<qty>\d+(?:[.,]\d+)?)\s*[xX]\s*(?P<unit>\d+(?:[.,]\d{2,3}))")
 _MONEY_PATTERN = re.compile(r"\d+(?:[.,]\d{2,3})")
