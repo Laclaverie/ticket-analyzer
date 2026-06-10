@@ -1,6 +1,5 @@
 from sqlalchemy.orm import Session
 
-from parsing_core.parser import ReceiptLineParser
 from taxonomy_core.keyword_classifier import KeywordClassifier
 from taxonomy_core.loader import TaxonomyLoader
 from worker_service.processors.base import BaseProcessor
@@ -16,5 +15,6 @@ def create_processor(db: Session, processor_kind: str) -> BaseProcessor:
     if kind == "ocr":
         nodes = TaxonomyLoader.load_default()
         classifier = KeywordClassifier(nodes)
-        return OcrProcessor(db, AutoOcrClient(), ReceiptLineParser(), classifier)
+        # OcrProcessor now handles its own StoreDetector and ReceiptLineParser internally
+        return OcrProcessor(db, AutoOcrClient(), classifier)
     raise ValueError(f"Unsupported processor kind: {processor_kind}")

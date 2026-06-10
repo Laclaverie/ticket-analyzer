@@ -3,6 +3,7 @@ from pathlib import Path
 from sqlalchemy.orm import Session
 
 from parsing_core.parser import ReceiptLineParser
+from parsing_core.detector import StoreDetector
 from persistence.models.processing_job import ProcessingJobORM
 from persistence.models.receipt import ReceiptORM
 from persistence.models.receipt_item import ReceiptItemNormalizedORM, ReceiptItemRawORM
@@ -19,13 +20,13 @@ class OcrProcessor(BaseProcessor):
         self,
         db: Session,
         ocr_client: BaseOcrClient,
-        line_parser: ReceiptLineParser,
         classifier: BaseClassifier,
+        store_detector: StoreDetector = StoreDetector(),
     ) -> None:
         self._db = db
         self._ocr_client = ocr_client
-        self._line_parser = line_parser
         self._classifier = classifier
+        self._store_detector = store_detector
 
     @property
     def name(self) -> str:
@@ -48,9 +49,13 @@ class OcrProcessor(BaseProcessor):
         if not lines:
             lines = [Path(image_path).stem or "unreadable receipt"]
 
-        self._replace_extracted_items(receipt.id, lines)
+        # Detect store and create specialized parser
+        store_type = self._store_detector.detect(lines)
+        line_parser = ReceiptLineParser(store_type=store_type)
 
-    def _replace_extracted_items(self, receipt_id: str, lines: list[str]) -> None:
+        self._replace_extracted_items(receipt.id, lines, line_parser)
+
+    def _replace_extracted_items(self, receipt_id: str, lines: list[str], line_parser: ReceiptLineParser) -> None:
         existing_raw_items = (
             self._db.query(ReceiptItemRawORM)
             .filter(ReceiptItemRawORM.receipt_id == receipt_id)
@@ -80,7 +85,7 @@ class OcrProcessor(BaseProcessor):
             self._db.add(raw_item)
             self._db.flush()
 
-            parsed = self._line_parser.parse_line(line)
+            parsed = line_parser.parse_line(line)
             classification = self._classifier.classify(parsed.normalized_name)
             normalized = ReceiptItemNormalizedORM(
                 receipt_item_raw_id=raw_item.id,
