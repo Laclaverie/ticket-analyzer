@@ -12,6 +12,9 @@ NC='\033[0m'
 
 echo -e "${BLUE}Starting Ticket Analyzer development environment...${NC}"
 
+# Create data directory in root if it doesn't exist
+mkdir -p data
+
 # Kill existing processes on relevant ports
 echo "Checking for existing processes..."
 PORT_8000_PID=$(lsof -t -i :8000)
@@ -25,6 +28,10 @@ if [ ! -z "$PORT_5173_PID" ]; then
     echo "Killing process on port 5173: $PORT_5173_PID"
     kill $PORT_5173_PID
 fi
+
+# Set shared environment variables
+export DATABASE_URL="sqlite:///$(pwd)/data/ticket_analyzer.db"
+export STORAGE_PATH="$(pwd)/data/images"
 
 # 1. API Service
 echo -e "${GREEN}Launching API Service (port 8000)...${NC}"
@@ -45,6 +52,7 @@ echo -e "${BLUE}All services launched!${NC}"
 echo -e "API:    http://localhost:8000"
 echo -e "Web:    http://localhost:5173"
 echo -e "Logs:   api.log, worker.log, web.log"
+echo -e "Data:   $(pwd)/data"
 echo ""
 echo "Press Ctrl+C to stop all services."
 
