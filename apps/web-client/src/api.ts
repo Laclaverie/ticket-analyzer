@@ -8,6 +8,8 @@ import type {
   ReceiptItemsResponse,
   ReceiptDetail,
   TopItem,
+  UploadReceiptResponse,
+  JobStatus,
 } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
@@ -268,7 +270,7 @@ export async function loadReceiptDetail(receiptId: string): Promise<ReceiptDetai
   return safeFetchReceiptDetail(receiptId);
 }
 
-export async function uploadReceipt(file: File): Promise<void> {
+export async function uploadReceipt(file: File): Promise<UploadReceiptResponse> {
   const formData = new FormData();
   formData.append('file', file);
 
@@ -280,6 +282,12 @@ export async function uploadReceipt(file: File): Promise<void> {
   if (!response.ok) {
     throw new Error(`Upload failed: ${response.status}`);
   }
+
+  return (await response.json()) as UploadReceiptResponse;
+}
+
+export async function getJobStatus(jobId: string): Promise<JobStatus> {
+  return fetchJson<JobStatus>(`/jobs/${jobId}`);
 }
 
 export function exportReceiptsCsv(receipts: ReceiptListResponse): void {

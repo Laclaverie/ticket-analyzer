@@ -80,3 +80,23 @@ export interface ReceiptDetailSnapshot {
   items: NormalizedItem[];
   source: 'api' | 'mock';
 }
+
+export interface UploadReceiptResponse {
+  receipt_id: string;
+  job_id: string;
+  message: string;
+}
+
+export type ProcessingStatus = 'pending' | 'in_progress' | 'completed' | 'failed';
+
+export interface JobStatus {
+  id: string;
+  receipt_id: string;
+  status: ProcessingStatus;
+  error_message: string | null;
+  retry_count: number;
+  max_attempts: number;
+  next_retry_at: string | null;
+  created_at: string;
+  updated_at: string;
+}

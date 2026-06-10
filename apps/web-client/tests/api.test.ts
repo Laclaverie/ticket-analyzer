@@ -114,13 +114,19 @@ describe('api loaders', () => {
   });
 
   it('uploads a receipt file successfully', async () => {
-    const fetchMock = vi.mocked(globalThis.fetch).mockResolvedValueOnce({
-      ok: true,
-      status: 201,
-    } as Response);
+    const fetchMock = vi.mocked(globalThis.fetch).mockResolvedValueOnce(
+      okJsonResponse({
+        receipt_id: 'receipt-123',
+        job_id: 'job-456',
+        message: 'Receipt uploaded and queued for processing.',
+      }),
+    );
 
     const file = new File(['dummy content'], 'receipt.jpg', { type: 'image/jpeg' });
-    await uploadReceipt(file);
+    const response = await uploadReceipt(file);
+
+    expect(response.receipt_id).toBe('receipt-123');
+    expect(response.job_id).toBe('job-456');
 
     expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/receipts/upload'),
