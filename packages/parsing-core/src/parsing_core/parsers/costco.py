@@ -6,15 +6,17 @@ from .base import BaseStoreParser
 
 class CostcoParser(BaseStoreParser):
     """Specific parser for Costco receipts."""
-    # Costco often has: 1234567 ITEM NAME 10.99 E
-    # Or: 1234567 ITEM NAME 2 x 5.00 10.00 E
+
+    # Standard item: SKU NAME PRICE [TAX]
+    # Price can have a '-' suffix for discounts (e.g., 2.00-)
     _COSTCO_ITEM_PATTERN = re.compile(
-        r"^(?P<sku>\d{4,10})\s+(?P<name>.+?)\s+(?P<price>\d+[.,]\d{2})\s*(?P<tax>[EPHF])?$",
+        r"^(?P<sku>\d{4,10})\s+(?P<name>.+?)\s+(?P<price>\d+[.,]\d{2})(?P<minus>-)?\s*(?P<tax>[EPHF])?$",
         re.IGNORECASE
     )
 
+    # Multi-item: SKU NAME QTY x UNIT TOTAL [TAX]
     _COSTCO_MULTI_ITEM_PATTERN = re.compile(
-        r"^(?P<sku>\d{4,10})\s+(?P<name>.+?)\s+(?P<qty>\d+)\s*[xX]\s*(?P<unit>\d+[.,]\d{2})\s+(?P<total>\d+[.,]\d{2})\s*(?P<tax>[EPHF])?$",
+        r"^(?P<sku>\d{4,10})\s+(?P<name>.+?)\s+(?P<qty>\d+(?:[.,]\d+)?)\s*[xX]\s*(?P<unit>\d+[.,]\d{2})\s+(?P<total>\d+[.,]\d{2})(?P<minus>-)?\s*(?P<tax>[EPHF])?$",
         re.IGNORECASE
     )
 
@@ -22,17 +24,27 @@ class CostcoParser(BaseStoreParser):
         # Try multi-item first
         match = self._COSTCO_MULTI_ITEM_PATTERN.search(line)
         if match:
+            total = self._to_decimal(match.group("total"))
+            if match.group("minus"):
+                total = -total
+
+            unit = self._to_decimal(match.group("unit"))
+            qty = self._to_decimal(match.group("qty"))
+
             return ParsedLineItem(
                 normalized_name=self._normalize_name(match.group("name")),
-                quantity=self._to_decimal(match.group("qty")),
-                unit_price=self._to_decimal(match.group("unit")),
-                line_total=self._to_decimal(match.group("total")),
+                quantity=qty,
+                unit_price=unit,
+                line_total=total,
                 confidence=0.95
             )
 
         match = self._COSTCO_ITEM_PATTERN.search(line)
         if match:
             price = self._to_decimal(match.group("price"))
+            if match.group("minus"):
+                price = -price
+
             return ParsedLineItem(
                 normalized_name=self._normalize_name(match.group("name")),
                 quantity=Decimal("1"),
