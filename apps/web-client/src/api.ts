@@ -290,6 +290,10 @@ export async function getJobStatus(jobId: string): Promise<JobStatus> {
   return fetchJson<JobStatus>(`/jobs/${jobId}`);
 }
 
+export async function getReceiptItems(receiptId: string): Promise<ReceiptItemsResponse> {
+  return fetchJson<ReceiptItemsResponse>(`/receipts/${receiptId}/items`);
+}
+
 export function exportReceiptsCsv(receipts: ReceiptListResponse): void {
   const rows = [
     ['id', 'store', 'purchase_date', 'total_amount', 'currency', 'created_at'],

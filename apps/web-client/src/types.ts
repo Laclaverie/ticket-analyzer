@@ -28,6 +28,7 @@ export interface ReceiptDetail extends ReceiptSummary {
 export interface NormalizedItem {
   id: string;
   receipt_item_raw_id: string;
+  raw_text?: string;
   normalized_name: string;
   quantity: string | number | null;
   unit_price: string | number | null;

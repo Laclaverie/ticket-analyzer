@@ -18,6 +18,7 @@ class RawItemResponse(BaseModel):
 class NormalizedItemResponse(BaseModel):
     id: str
     receipt_item_raw_id: str
+    raw_text: Optional[str] = None
     normalized_name: str
     quantity: Optional[Decimal]
     unit_price: Optional[Decimal]

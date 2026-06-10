@@ -74,7 +74,14 @@ def get_receipt_items(receipt_id: str, db: DbDep = None) -> ReceiptItemsResponse
     if not repo.find_detail_orm(receipt_id):
         raise HTTPException(status_code=404, detail="Receipt not found")
     items = repo.find_normalized_items(receipt_id)
+
+    response_items = []
+    for i in items:
+        resp = NormalizedItemResponse.model_validate(i)
+        resp.raw_text = i.raw_item.raw_text if i.raw_item else None
+        response_items.append(resp)
+
     return ReceiptItemsResponse(
         receipt_id=receipt_id,
-        items=[NormalizedItemResponse.model_validate(i) for i in items],
+        items=response_items,
     )
