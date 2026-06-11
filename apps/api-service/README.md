@@ -11,8 +11,3 @@ Responsibilities:
 Planned stack:
 - Python
 - FastAPI
-
-Run it 
-```
-uv run --package api-service uvicorn api_service.main:app --reload
-```

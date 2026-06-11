@@ -41,19 +41,23 @@ class AutoOcrClient(BaseOcrClient):
 
         if tesseract_path:
             logger.info("Using Tesseract OCR at: %s", tesseract_path)
-            result = subprocess.run(
-                [tesseract_path, image_path, "stdout"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-            if result.returncode == 0 and result.stdout.strip():
-                return result.stdout
-            logger.warning(
-                "Tesseract execution failed for %s (code=%s). Using fallback text.",
-                image_path,
-                result.returncode,
-            )
+            try:
+                result = subprocess.run(
+                    [tesseract_path, image_path, "stdout"],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    check=False,
+                )
+                if result.returncode == 0 and result.stdout and result.stdout.strip():
+                    return result.stdout
+                logger.warning(
+                    "Tesseract execution failed for %s (code=%s). Using fallback text.",
+                    image_path,
+                    result.returncode,
+                )
+            except Exception as e:
+                logger.error("Error during Tesseract execution: %s", e)
         else:
             logger.info("Tesseract not found in PATH. Using filename fallback for OCR.")
 
