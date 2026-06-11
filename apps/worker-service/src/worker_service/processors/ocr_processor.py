@@ -1,5 +1,6 @@
 from pathlib import Path
 import logging
+import csv
 
 from sqlalchemy.orm import Session
 
@@ -82,10 +83,23 @@ class OcrProcessor(BaseProcessor):
 
         line_parser = ReceiptLineParser(store_type=store_type)
 
-        self._replace_extracted_items(receipt.id, lines, line_parser)
+        dump_data = self._replace_extracted_items(receipt.id, lines, line_parser)
+
+        if self._debug_mode and dump_data:
+            receipt_dir = Path(image_path).parent
+            csv_path = receipt_dir / "parsing_dump.csv"
+            logger.info("Debug mode: Dumping parsing results to %s", csv_path)
+            try:
+                with open(csv_path, mode="w", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=dump_data[0].keys())
+                    writer.writeheader()
+                    writer.writerows(dump_data)
+            except Exception as e:
+                logger.error("Failed to write parsing dump CSV: %s", e)
+
         logger.info("Successfully persisted %d lines for receipt %s.", len(lines), receipt.id)
 
-    def _replace_extracted_items(self, receipt_id: str, lines: list[str], line_parser: ReceiptLineParser) -> None:
+    def _replace_extracted_items(self, receipt_id: str, lines: list[str], line_parser: ReceiptLineParser) -> list[dict]:
         existing_raw_items = (
             self._db.query(ReceiptItemRawORM)
             .filter(ReceiptItemRawORM.receipt_id == receipt_id)
@@ -108,6 +122,7 @@ class OcrProcessor(BaseProcessor):
         self._db.flush()
 
         parsed_count = 0
+        dump_data = []
         for index, line in enumerate(lines, start=1):
             raw_item = ReceiptItemRawORM(
                 receipt_id=receipt_id,
@@ -131,7 +146,19 @@ class OcrProcessor(BaseProcessor):
                 classification_origin=classification.origin,
             )
             self._db.add(normalized)
+            if self._debug_mode:
+                dump_data.append({
+                    "line_number": index,
+                    "raw_text": line,
+                    "normalized_name": parsed.normalized_name,
+                    "quantity": parsed.quantity,
+                    "unit_price": parsed.unit_price,
+                    "line_total": parsed.line_total,
+                    "category_id": classification.category_id,
+                })
+
             if parsed.line_total is not None:
                 parsed_count += 1
 
         logger.info("Normalized %d items from %d lines.", parsed_count, len(lines))
+        return dump_data

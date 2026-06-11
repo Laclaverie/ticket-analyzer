@@ -1,6 +1,15 @@
 import os
 from pathlib import Path
-from worker_service.processors.preprocessor import PipelinePreprocessor, ImageStep, CopyStep
+import cv2
+import numpy as np
+from worker_service.processors.preprocessor import (
+    PipelinePreprocessor,
+    ImageStep,
+    CopyStep,
+    GrayscaleStep,
+    ThresholdStep,
+    RescaleStep,
+)
 
 class MockStep(ImageStep):
     def __init__(self, name: str) -> None:
@@ -72,3 +81,28 @@ def test_copy_step_works(tmp_path):
 
     assert output_file.exists()
     assert output_file.read_text() == "image data"
+
+def test_advanced_steps_execution(tmp_path):
+    # Create a small dummy BGR image
+    input_path = tmp_path / "test.jpg"
+    img = np.zeros((100, 100, 3), dtype=np.uint8)
+    cv2.imwrite(str(input_path), img)
+
+    # Grayscale
+    gray_path = tmp_path / "gray.png"
+    GrayscaleStep().apply(input_path, gray_path)
+    assert gray_path.exists()
+    res = cv2.imread(str(gray_path))
+    assert len(res.shape) == 2 or res.shape[2] == 1 or np.all(res[:,:,0] == res[:,:,1])
+
+    # Threshold (on grayscale)
+    thresh_path = tmp_path / "thresh.png"
+    ThresholdStep().apply(gray_path, thresh_path)
+    assert thresh_path.exists()
+
+    # Rescale
+    rescale_path = tmp_path / "rescale.png"
+    RescaleStep(min_width=200).apply(input_path, rescale_path)
+    assert rescale_path.exists()
+    rescaled_img = cv2.imread(str(rescale_path))
+    assert rescaled_img.shape[1] == 200
