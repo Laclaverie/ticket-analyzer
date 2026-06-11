@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from parsing_core.parser import ReceiptLineParser
 from parsing_core.detector import StoreDetector
+from parsing_core.stores import StoreType
 from persistence.models.processing_job import ProcessingJobORM
 from persistence.models.receipt import ReceiptORM
 from persistence.models.receipt_item import ReceiptItemNormalizedORM, ReceiptItemRawORM
@@ -27,7 +28,7 @@ class OcrProcessor(BaseProcessor):
         classifier: BaseClassifier,
         store_detector: StoreDetector = StoreDetector(),
         preprocessor: BaseImagePreprocessor = NoOpPreprocessor(),
-        debug_mode: bool = False,
+        debug_mode: bool = True,
     ) -> None:
         self._db = db
         self._ocr_client = ocr_client
@@ -63,6 +64,8 @@ class OcrProcessor(BaseProcessor):
              logger.warning("Image path %s does not exist. This might be due to shared storage discrepancy.", image_path)
 
         # Pre-process image (deskew, threshold, etc.)
+        logger.info("Starting image pre-processing for receipt %s.", receipt.id)
+        logger.info("Debug mode is %s. Intermediary steps will %s saved.", "enabled" if self._debug_mode else "disabled", "be" if self._debug_mode else "not be")
         processed_image_path = self._preprocessor.process(image_path, debug=self._debug_mode)
         if processed_image_path != image_path:
             logger.info("Using pre-processed image: %s", processed_image_path)
@@ -79,7 +82,12 @@ class OcrProcessor(BaseProcessor):
         # Detect store and create specialized parser
         store_type = self._store_detector.detect(lines)
         logger.info("Detected store type: %s", store_type)
-
+        
+        # TODO : FIX ME if store type is unknown use costco instead (to remove)
+        if store_type == StoreType.UNKNOWN:
+            logger.warning("Store type is unknown. Defaulting to 'costco' parser for better results.")
+            store_type = StoreType.COSTCO
+            
         line_parser = ReceiptLineParser(store_type=store_type)
 
         self._replace_extracted_items(receipt.id, lines, line_parser)
