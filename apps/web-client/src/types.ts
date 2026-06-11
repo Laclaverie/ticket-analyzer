@@ -101,3 +101,16 @@ export interface JobStatus {
   created_at: string;
   updated_at: string;
 }
+
+export interface WorkerStatus {
+  worker_id: string;
+  processor_kind: string;
+  last_heartbeat: string;
+  status: 'online' | 'offline';
+  is_active: boolean;
+}
+
+export interface SystemStatusResponse {
+  workers: WorkerStatus[];
+  server_time: string;
+}

@@ -10,6 +10,7 @@ import type {
   TopItem,
   UploadReceiptResponse,
   JobStatus,
+  SystemStatusResponse,
 } from './types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:8000';
@@ -292,6 +293,10 @@ export async function getJobStatus(jobId: string): Promise<JobStatus> {
 
 export async function getReceiptItems(receiptId: string): Promise<ReceiptItemsResponse> {
   return fetchJson<ReceiptItemsResponse>(`/receipts/${receiptId}/items`);
+}
+
+export async function getSystemStatus(): Promise<SystemStatusResponse> {
+  return fetchJson<SystemStatusResponse>('/system/status');
 }
 
 export function exportReceiptsCsv(receipts: ReceiptListResponse): void {

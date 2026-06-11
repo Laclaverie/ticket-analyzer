@@ -1,5 +1,7 @@
 import logging
 import time
+import socket
+import os
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
@@ -7,6 +9,7 @@ from sqlalchemy.orm import Session
 from worker_service.processors.base import BaseProcessor
 from worker_service.repositories.job_repository import JobRepository
 from persistence.models.processing_job import ProcessingJobORM
+from persistence.models.worker_status import WorkerStatusORM
 
 logger = logging.getLogger(__name__)
 
@@ -14,10 +17,7 @@ logger = logging.getLogger(__name__)
 class JobPoller:
     """
     Polls the database for PENDING jobs and dispatches them to a BaseProcessor.
-
-    Template Method: the fixed lifecycle (find → process → mark done/failed) is
-    defined here; the variable step (the actual processing) is delegated to the
-    injected processor strategy.
+    Also updates a heartbeat in the database to signal health.
     """
 
     def __init__(
@@ -35,11 +35,37 @@ class JobPoller:
         self._retry_delay_seconds = retry_delay_seconds
         self._job_repo = JobRepository(db)
 
+        # Unique ID for this worker instance
+        self._worker_id = f"{socket.gethostname()}-{os.getpid()}"
+
+    def update_heartbeat(self) -> None:
+        """Update the worker's heartbeat in the database."""
+        try:
+            status = self._db.get(WorkerStatusORM, self._worker_id)
+            if not status:
+                status = WorkerStatusORM(
+                    worker_id=self._worker_id,
+                    processor_kind=self._processor.name,
+                    status="online"
+                )
+                self._db.add(status)
+            else:
+                status.last_heartbeat = datetime.now(timezone.utc)
+                status.status = "online"
+
+            self._db.commit()
+        except Exception as e:
+            self._db.rollback()
+            logger.warning("Failed to update heartbeat: %s", e)
+
     def poll_once(self) -> int:
         """
         Process one batch of pending jobs.
         Returns the number of jobs dispatched in this pass.
         """
+        # Update heartbeat on every poll attempt
+        self.update_heartbeat()
+
         jobs = self._job_repo.find_pending(limit=self._batch_size)
 
         for job in jobs:
@@ -74,7 +100,7 @@ class JobPoller:
 
     def run(self) -> None:
         """Run the polling loop indefinitely."""
-        logger.info("Worker started with processor: %s", self._processor.name)
+        logger.info("Worker %s started with processor: %s", self._worker_id, self._processor.name)
         while True:
             processed = self.poll_once()
             if processed == 0:

@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api_service.database import create_all_tables
 from api_service.config import Settings
-from api_service.routers import health, receipts, jobs, analytics
+from api_service.routers import health, receipts, jobs, analytics, system
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -34,6 +34,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(receipts.router)
     app.include_router(jobs.router)
     app.include_router(analytics.router)
+    app.include_router(system.router)
     return app
 
 

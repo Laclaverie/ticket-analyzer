@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { uploadReceipt, getJobStatus, getReceiptItems } from '../api';
-import { UploadReceiptResponse, JobStatus, NormalizedItem } from '../types';
+import { uploadReceipt, getJobStatus, getReceiptItems, getSystemStatus } from '../api';
+import { UploadReceiptResponse, JobStatus, NormalizedItem, SystemStatusResponse } from '../types';
 
 export const DebugPage: React.FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -8,10 +8,32 @@ export const DebugPage: React.FC = () => {
   const [uploadResponse, setUploadResponse] = useState<UploadReceiptResponse | null>(null);
   const [jobStatus, setJobStatus] = useState<JobStatus | null>(null);
   const [extractedItems, setExtractedItems] = useState<NormalizedItem[]>([]);
+  const [systemStatus, setSystemStatus] = useState<SystemStatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [rawRequest, setRawRequest] = useState<string | null>(null);
 
   const pollingIntervalRef = useRef<number | null>(null);
+  const systemStatusIntervalRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const fetchSystemStatus = async () => {
+      try {
+        const status = await getSystemStatus();
+        setSystemStatus(status);
+      } catch (err) {
+        console.error('Failed to fetch system status:', err);
+      }
+    };
+
+    fetchSystemStatus();
+    systemStatusIntervalRef.current = window.setInterval(fetchSystemStatus, 5000);
+
+    return () => {
+      if (systemStatusIntervalRef.current) {
+        window.clearInterval(systemStatusIntervalRef.current);
+      }
+    };
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -29,7 +51,6 @@ export const DebugPage: React.FC = () => {
     setJobStatus(null);
     setExtractedItems([]);
 
-    // Simulate raw request view
     setRawRequest(`POST /receipts/upload\nContent-Type: multipart/form-data\n\nFile: ${file.name} (${file.size} bytes)`);
 
     try {
@@ -56,7 +77,6 @@ export const DebugPage: React.FC = () => {
           if (pollingIntervalRef.current) {
             window.clearInterval(pollingIntervalRef.current);
           }
-          // Fetch the results
           const itemsResp = await getReceiptItems(status.receipt_id);
           setExtractedItems(itemsResp.items);
         } else if (status.status === 'failed') {
@@ -84,7 +104,7 @@ export const DebugPage: React.FC = () => {
   return (
     <div style={{
       padding: '20px',
-      maxWidth: '1000px',
+      maxWidth: '1200px',
       margin: '20px auto',
       fontFamily: 'sans-serif',
       color: '#333',
@@ -92,7 +112,30 @@ export const DebugPage: React.FC = () => {
       borderRadius: '12px',
       boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
     }}>
-      <h1 style={{ color: '#000' }}>Phone Simulator (Debug)</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <h1 style={{ color: '#000' }}>Phone Simulator (Debug)</h1>
+
+        <div style={{ display: 'flex', gap: '10px' }}>
+          {systemStatus?.workers.map(worker => (
+            <div key={worker.worker_id} style={{
+              padding: '5px 12px',
+              borderRadius: '20px',
+              fontSize: '12px',
+              backgroundColor: worker.is_active ? '#d4edda' : '#f8d7da',
+              color: worker.is_active ? '#155724' : '#721c24',
+              border: `1px solid ${worker.is_active ? '#c3e6cb' : '#f5c6cb'}`
+            }}>
+              Worker: <strong>{worker.status.toUpperCase()}</strong> ({worker.processor_kind})
+            </div>
+          ))}
+          {(!systemStatus || systemStatus.workers.length === 0) && (
+             <div style={{ padding: '5px 12px', borderRadius: '20px', fontSize: '12px', backgroundColor: '#fff3cd', color: '#856404', border: '1px solid #ffeeba' }}>
+               No Workers Detected
+             </div>
+          )}
+        </div>
+      </div>
+
       <p>Use this page to simulate a mobile phone uploading a receipt photo and see how the backend processes it.</p>
 
       <section style={{ marginBottom: '30px', padding: '15px', border: '1px solid #ccc', borderRadius: '8px' }}>
