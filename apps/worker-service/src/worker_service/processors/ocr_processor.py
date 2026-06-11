@@ -12,6 +12,7 @@ from taxonomy_core.classifier import BaseClassifier
 
 from worker_service.processors.base import BaseProcessor
 from worker_service.processors.ocr_client import BaseOcrClient
+from worker_service.processors.preprocessor import BaseImagePreprocessor, NoOpPreprocessor
 
 logger = logging.getLogger(__name__)
 
@@ -25,11 +26,13 @@ class OcrProcessor(BaseProcessor):
         ocr_client: BaseOcrClient,
         classifier: BaseClassifier,
         store_detector: StoreDetector = StoreDetector(),
+        preprocessor: BaseImagePreprocessor = NoOpPreprocessor(),
     ) -> None:
         self._db = db
         self._ocr_client = ocr_client
         self._classifier = classifier
         self._store_detector = store_detector
+        self._preprocessor = preprocessor
 
     @property
     def name(self) -> str:
@@ -57,7 +60,12 @@ class OcrProcessor(BaseProcessor):
         if not Path(image_path).exists():
              logger.warning("Image path %s does not exist. This might be due to shared storage discrepancy.", image_path)
 
-        text = self._ocr_client.extract_text(image_path)
+        # Pre-process image (deskew, threshold, etc.)
+        processed_image_path = self._preprocessor.process(image_path)
+        if processed_image_path != image_path:
+            logger.info("Using pre-processed image: %s", processed_image_path)
+
+        text = self._ocr_client.extract_text(processed_image_path)
         lines = [line.strip() for line in text.splitlines() if line.strip()]
 
         if not lines:
