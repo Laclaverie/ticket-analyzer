@@ -38,7 +38,7 @@ def main() -> None:
     factory = create_session_factory(engine)
     db = factory()
 
-    processor = create_processor(db, settings.processor_kind)
+    processor = create_processor(db, settings)
     poller = JobPoller(
         db,
         processor,
