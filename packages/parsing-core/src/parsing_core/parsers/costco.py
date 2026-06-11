@@ -9,14 +9,15 @@ class CostcoParser(BaseStoreParser):
 
     # Standard item: SKU NAME PRICE [TAX]
     # Price can have a '-' suffix for discounts (e.g., 2.00-)
+    # Tax can be 1 or 2 letters (e.g., H, FP, TP)
     _COSTCO_ITEM_PATTERN = re.compile(
-        r"^(?P<sku>\d{4,10})\s+(?P<name>.+?)\s+(?P<price>\d+[.,]\d{2})(?P<minus>-)?\s*(?P<tax>[EPHF])?$",
+        r"^(?P<sku>\d{4,10})\s+(?P<name>.+?)\s+(?P<price>\d+[.,]\d{2})(?P<minus>-)?\s*(?P<tax>[A-Z]{1,2})?$",
         re.IGNORECASE
     )
 
     # Multi-item: SKU NAME QTY x UNIT TOTAL [TAX]
     _COSTCO_MULTI_ITEM_PATTERN = re.compile(
-        r"^(?P<sku>\d{4,10})\s+(?P<name>.+?)\s+(?P<qty>\d+(?:[.,]\d+)?)\s*[xX]\s*(?P<unit>\d+[.,]\d{2})\s+(?P<total>\d+[.,]\d{2})(?P<minus>-)?\s*(?P<tax>[EPHF])?$",
+        r"^(?P<sku>\d{4,10})\s+(?P<name>.+?)\s+(?P<qty>\d+(?:[.,]\d+)?)\s*[xX]\s*(?P<unit>\d+[.,]\d{2})\s+(?P<total>\d+[.,]\d{2})(?P<minus>-)?\s*(?P<tax>[A-Z]{1,2})?$",
         re.IGNORECASE
     )
 

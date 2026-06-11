@@ -35,7 +35,16 @@ Based on the `original.jpg` sample, several Costco-specific patterns can be opti
     *   *Logic:* `SUM(items.line_total) == SUB_TOTAL`. `SUB_TOTAL + TAX == TOTAL`.
     *   If the math doesn't add up, the system should flag the receipt for manual review or attempt a "re-scan" with different thresholding parameters.
 
-## 4. Proposed Architectural Skeleton
+## 4. Regional Variations (Quebec/Bilingual)
+
+*   **Multi-letter Tax Codes:** In Quebec, tax codes like `FP` (Federal + Provincial) or `TP` are common. Parsers must support 1-2 letter suffixes.
+*   **Bilingual Keywords:** Footer detection should include French keywords:
+    *   `SUBTOTAL` -> `SOUS-TOT` or `SOUSTOT`
+    *   `TOTAL` -> `TOTAL` (Same)
+    *   `TAX` -> `TAXE` or `T.V.Q` / `T.P.S`
+*   **Item Names:** Names may include French descriptors (e.g., `COSTCO SACS`, `LAITUE F.`).
+
+## 5. Proposed Architectural Skeleton
 
 To support this without bloating the `OcrProcessor`, we introduce an `ImagePreprocessor` chain:
 
@@ -59,7 +68,7 @@ class OcrProcessor:
         ...
 ```
 
-## 5. Next Steps (Implementation Phases)
+## 6. Next Steps (Implementation Phases)
 
 1.  **Phase A (Architecture):** Integrate the `BaseImagePreprocessor` skeleton into the worker.
 2.  **Phase B (Vision - Optional Dependency):** Implement a `VisionPreprocessor` using `OpenCV` and `numpy`. These should be optional dependencies (e.g., `pip install .[vision]`).

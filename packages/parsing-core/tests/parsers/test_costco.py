@@ -60,3 +60,16 @@ def test_costco_from_image_sample():
     parsed = parser.parse_line(sample_lines[2])
     assert parsed.normalized_name == "tpd/1130150"
     assert parsed.line_total == Decimal("-7.50")
+
+def test_costco_quebec_typology():
+    parser = CostcoParser()
+
+    # Two-letter tax code (Federal + Provincial)
+    parsed = parser.parse_line("1944474 COSTCO SACS 7.99 FP")
+    assert parsed.normalized_name == "costco sacs"
+    assert parsed.line_total == Decimal("7.99")
+
+    # Item with French descriptor and two-letter tax
+    parsed = parser.parse_line("1835596 KS GOUS/VANT 14.99 FP")
+    assert parsed.normalized_name == "ks gous/vant"
+    assert parsed.line_total == Decimal("14.99")
