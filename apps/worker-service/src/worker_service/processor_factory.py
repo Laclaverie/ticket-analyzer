@@ -6,7 +6,11 @@ from worker_service.config import Settings
 from worker_service.processors.base import BaseProcessor
 from worker_service.processors.ocr_client import AutoOcrClient
 from worker_service.processors.ocr_processor import OcrProcessor
-from worker_service.processors.preprocessor import NoOpPreprocessor
+from worker_service.processors.preprocessor import (
+    CopyStep,
+    NoOpPreprocessor,
+    PipelinePreprocessor,
+)
 from worker_service.processors.stub_processor import StubProcessor
 
 
@@ -19,8 +23,8 @@ def create_processor(db: Session, settings: Settings) -> BaseProcessor:
         classifier = KeywordClassifier(nodes)
         # OcrProcessor now handles its own StoreDetector and ReceiptLineParser internally
         ocr_client = AutoOcrClient(tesseract_cmd=settings.tesseract_cmd)
-        # Preprocessor could be switched based on configuration in the future
-        preprocessor = NoOpPreprocessor()
+        # Use a PipelinePreprocessor with a CopyStep to verify the infrastructure
+        preprocessor = PipelinePreprocessor(steps=[CopyStep()])
         return OcrProcessor(
             db,
             ocr_client,

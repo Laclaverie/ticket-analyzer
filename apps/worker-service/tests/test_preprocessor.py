@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from worker_service.processors.preprocessor import PipelinePreprocessor, ImageStep
+from worker_service.processors.preprocessor import PipelinePreprocessor, ImageStep, CopyStep
 
 class MockStep(ImageStep):
     def __init__(self, name: str) -> None:
@@ -60,3 +60,15 @@ def test_pipeline_preprocessor_no_debug_mode(tmp_path):
     # Final path should be the hidden temp file from the last step
     assert Path(final_path).name == ".tmp_step_1.png"
     assert Path(final_path).exists()
+
+def test_copy_step_works(tmp_path):
+    input_file = tmp_path / "input.jpg"
+    input_file.write_text("image data")
+    output_file = tmp_path / "output.jpg"
+
+    step = CopyStep()
+    assert step.name == "Copy"
+    step.apply(input_file, output_file)
+
+    assert output_file.exists()
+    assert output_file.read_text() == "image data"

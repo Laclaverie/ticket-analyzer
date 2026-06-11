@@ -20,7 +20,7 @@ class ImageStep(ABC):
 class BaseImagePreprocessor(ABC):
     """Abstract base class for image pre-processing steps."""
     @abstractmethod
-    def process(self, image_path: str, debug: bool = True) -> str:
+    def process(self, image_path: str, debug: bool = False) -> str:
         """
         Processes the image at the given path and returns the path to the
         pre-processed image.
@@ -28,16 +28,25 @@ class BaseImagePreprocessor(ABC):
 
 class NoOpPreprocessor(BaseImagePreprocessor):
     """Default preprocessor that does nothing and returns the original path."""
-    def process(self, image_path: str, debug: bool = True) -> str:
+    def process(self, image_path: str, debug: bool = False) -> str:
         logger.debug("No-op preprocessing: using original image path %s", image_path)
         return image_path
+
+class CopyStep(ImageStep):
+    """A simple step that copies the input image to the output path."""
+    @property
+    def name(self) -> str:
+        return "Copy"
+
+    def apply(self, input_path: Path, output_path: Path) -> None:
+        shutil.copy2(input_path, output_path)
 
 class PipelinePreprocessor(BaseImagePreprocessor):
     """Executes a series of ImageSteps, optionally saving intermediary debug images."""
     def __init__(self, steps: List[ImageStep]) -> None:
         self._steps = steps
 
-    def process(self, image_path: str, debug: bool = True) -> str:
+    def process(self, image_path: str, debug: bool = False) -> str:
         if not self._steps:
             return image_path
 
