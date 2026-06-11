@@ -28,6 +28,7 @@ export interface ReceiptDetail extends ReceiptSummary {
 export interface NormalizedItem {
   id: string;
   receipt_item_raw_id: string;
+  raw_text?: string;
   normalized_name: string;
   quantity: string | number | null;
   unit_price: string | number | null;
@@ -99,4 +100,17 @@ export interface JobStatus {
   next_retry_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface WorkerStatus {
+  worker_id: string;
+  processor_kind: string;
+  last_heartbeat: string;
+  status: 'online' | 'offline';
+  is_active: boolean;
+}
+
+export interface SystemStatusResponse {
+  workers: WorkerStatus[];
+  server_time: string;
 }

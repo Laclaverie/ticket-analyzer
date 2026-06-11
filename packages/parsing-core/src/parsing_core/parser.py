@@ -1,7 +1,10 @@
 import re
 from decimal import Decimal, InvalidOperation
+from typing import Optional
 
 from parsing_core.models import ParsedLineItem
+from .stores import StoreType
+from .parsers import CostcoParser, IgaParser, BaseStoreParser
 
 _QTY_X_UNIT_PATTERN = re.compile(r"(?P<qty>\d+(?:[.,]\d+)?)\s*[xX]\s*(?P<unit>\d+(?:[.,]\d{2,3}))")
 _MONEY_PATTERN = re.compile(r"\d+(?:[.,]\d{2,3})")
@@ -9,9 +12,28 @@ _WHITESPACE_PATTERN = re.compile(r"\s+")
 
 
 class ReceiptLineParser:
-    """Rule-based parser for OCR receipt lines."""
+    """Rule-based parser for OCR receipt lines, with store-specific overrides."""
+
+    def __init__(self, store_type: StoreType = StoreType.UNKNOWN):
+        self.store_type = store_type
+        self._specific_parser: Optional[BaseStoreParser] = None
+
+        if store_type == StoreType.COSTCO:
+            self._specific_parser = CostcoParser()
+        elif store_type == StoreType.IGA:
+            self._specific_parser = IgaParser()
 
     def parse_line(self, line: str) -> ParsedLineItem:
+        # Try store-specific parser first
+        if self._specific_parser:
+            specific_result = self._specific_parser.parse_line(line)
+            if specific_result:
+                return specific_result
+
+        # Fallback to generic heuristic parser
+        return self._parse_line_generic(line)
+
+    def _parse_line_generic(self, line: str) -> ParsedLineItem:
         cleaned = _WHITESPACE_PATTERN.sub(" ", line.strip())
         if not cleaned:
             return ParsedLineItem("unknown item", None, None, None, 0.1)

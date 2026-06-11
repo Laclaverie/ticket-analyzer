@@ -1,7 +1,6 @@
 from persistence.models.processing_job import ProcessingJobORM
 from persistence.models.receipt import ReceiptImageORM, ReceiptORM
 from persistence.models.receipt_item import ReceiptItemNormalizedORM, ReceiptItemRawORM
-from parsing_core.parser import ReceiptLineParser
 from taxonomy_core.classifier import BaseClassifier, ClassificationResult
 from worker_service.processors.ocr_client import BaseOcrClient
 from worker_service.processors.ocr_processor import OcrProcessor
@@ -30,7 +29,6 @@ def _make_processor(db_session, ocr_text: str) -> OcrProcessor:
     return OcrProcessor(
         db_session,
         FakeOcrClient(ocr_text),
-        ReceiptLineParser(),
         FakeClassifier(),
     )
 
