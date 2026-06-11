@@ -21,5 +21,11 @@ def create_processor(db: Session, settings: Settings) -> BaseProcessor:
         ocr_client = AutoOcrClient(tesseract_cmd=settings.tesseract_cmd)
         # Preprocessor could be switched based on configuration in the future
         preprocessor = NoOpPreprocessor()
-        return OcrProcessor(db, ocr_client, classifier, preprocessor=preprocessor)
+        return OcrProcessor(
+            db,
+            ocr_client,
+            classifier,
+            preprocessor=preprocessor,
+            debug_mode=settings.debug_preprocessor,
+        )
     raise ValueError(f"Unsupported processor kind: {settings.processor_kind}")

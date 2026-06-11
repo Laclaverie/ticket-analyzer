@@ -27,12 +27,14 @@ class OcrProcessor(BaseProcessor):
         classifier: BaseClassifier,
         store_detector: StoreDetector = StoreDetector(),
         preprocessor: BaseImagePreprocessor = NoOpPreprocessor(),
+        debug_mode: bool = False,
     ) -> None:
         self._db = db
         self._ocr_client = ocr_client
         self._classifier = classifier
         self._store_detector = store_detector
         self._preprocessor = preprocessor
+        self._debug_mode = debug_mode
 
     @property
     def name(self) -> str:
@@ -61,7 +63,7 @@ class OcrProcessor(BaseProcessor):
              logger.warning("Image path %s does not exist. This might be due to shared storage discrepancy.", image_path)
 
         # Pre-process image (deskew, threshold, etc.)
-        processed_image_path = self._preprocessor.process(image_path)
+        processed_image_path = self._preprocessor.process(image_path, debug=self._debug_mode)
         if processed_image_path != image_path:
             logger.info("Using pre-processed image: %s", processed_image_path)
 

@@ -61,14 +61,25 @@ class ScanEnhancer(BaseImagePreprocessor):
 class OcrProcessor:
     def process(self, job_id: str):
         # 1. Enhance
-        enhanced_image = self.preprocessor.process(raw_image)
+        enhanced_image = self.preprocessor.process(raw_image, debug=self.debug_mode)
         # 2. Extract
         text = self.ocr_client.extract_text(enhanced_image)
         # 3. Parse (with layout context)
         ...
 ```
 
-## 6. Next Steps (Implementation Phases)
+## 6. Debugging and Troubleshooting
+
+To help developers understand what goes wrong during image processing, the `worker-service` includes a debug mode for the preprocessor.
+
+*   **Activation:** Set `DEBUG_PREPROCESSOR=True` in the `.env` file (activated by default in development).
+*   **Behavior:** When enabled, the `PipelinePreprocessor` saves an intermediary image after each step.
+*   **Storage Convention:**
+    *   Intermediary images are saved in a `pre_steps/` folder inside the specific receipt's storage directory.
+    *   Naming convention: `{step_index}_{NameOfTheProcess}.png` (e.g., `1_Grayscale.png`, `2_Threshold.png`).
+    *   The original image remains at the root of the receipt directory as `original.{ext}`.
+
+## 7. Next Steps (Implementation Phases)
 
 1.  **Phase A (Architecture):** Integrate the `BaseImagePreprocessor` skeleton into the worker.
 2.  **Phase B (Vision - Optional Dependency):** Implement a `VisionPreprocessor` using `OpenCV` and `numpy`. These should be optional dependencies (e.g., `pip install .[vision]`).
