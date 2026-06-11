@@ -1,5 +1,6 @@
 import logging
 import sys
+import os
 
 from persistence.base import Base
 from persistence.engine import create_db_engine, create_session_factory
@@ -20,6 +21,16 @@ logger = logging.getLogger(__name__)
 
 def main() -> None:
     settings = Settings()
+
+    # Log absolute database path for debugging
+    db_path = settings.database_url
+    if db_path.startswith("sqlite:///"):
+        # Handle relative vs absolute sqlite paths
+        raw_path = db_path.replace("sqlite:///", "")
+        abs_path = os.path.abspath(raw_path)
+        logger.info("Connecting to SQLite database at: %s", abs_path)
+    else:
+        logger.info("Connecting to database: %s", db_path)
 
     engine = create_db_engine(settings.database_url)
     Base.metadata.create_all(engine)

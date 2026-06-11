@@ -24,6 +24,7 @@ class AutoOcrClient(BaseOcrClient):
     def extract_text(self, image_path: str) -> str:
         tesseract_path = shutil.which("tesseract")
         if tesseract_path:
+            logger.info("Using Tesseract OCR at: %s", tesseract_path)
             result = subprocess.run(
                 [tesseract_path, image_path, "stdout"],
                 capture_output=True,
@@ -37,12 +38,15 @@ class AutoOcrClient(BaseOcrClient):
                 image_path,
                 result.returncode,
             )
+        else:
+            logger.info("Tesseract not found in PATH. Using filename fallback for OCR.")
 
         return self._fallback_text(image_path)
 
     @staticmethod
     def _fallback_text(image_path: str) -> str:
         stem = Path(image_path).stem.strip()
+        logger.debug("Generating fallback text from filename stem: %s", stem)
         if not stem:
             return "unreadable receipt"
         return stem.replace("_", " ").replace("-", " ")
