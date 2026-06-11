@@ -1,2 +1,2 @@
 #!/bin/bash
-./scripts/dev.sh
+bash ./scripts/dev.sh
