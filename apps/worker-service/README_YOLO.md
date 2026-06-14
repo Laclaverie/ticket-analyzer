@@ -8,14 +8,14 @@ This project supports using a YOLOv8-seg model to improve receipt detection by i
     The `ultralytics` library is included in `pyproject.toml` as a standard dependency.
 
 2.  **Model Weights:**
-    Place your trained YOLO weights (e.g., `best.pt`) in the project. The default path is `data/weights/best.pt` relative to the repository root.
+    Place your trained YOLO weights (e.g., `best.pt`) in the project. The default path is `apps/worker-service/data/weights/best.pt`.
 
 3.  **Configuration:**
     Update your `.env` file or environment variables:
     ```env
     YOLO_ENABLED=True
     USE_YOLO_PIPELINE=True
-    YOLO_MODEL_PATH=data/weights/best.pt
+    YOLO_MODEL_PATH=apps/worker-service/data/weights/best.pt
     YOLO_CONFIDENCE=0.55
     ```
 

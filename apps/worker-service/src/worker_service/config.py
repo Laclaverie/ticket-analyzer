@@ -16,5 +16,5 @@ class Settings(BaseSettings):
     # YOLO detection settings
     yolo_enabled: bool = True
     use_yolo_pipeline: bool = True  # If True, uses YOLO as the ONLY segmentation step
-    yolo_model_path: str = "data/weights/best.pt"
+    yolo_model_path: str = "apps/worker-service/data/weights/best.pt"
     yolo_confidence: float = 0.55
