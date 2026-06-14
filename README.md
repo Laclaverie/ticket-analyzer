@@ -35,3 +35,26 @@ See [REPO_STRUCTURE.md](REPO_STRUCTURE.md) for the full map.
 
 Details are captured in ADR-005.
 
+# Dev
+```bash
+# Install uv (once)
+pip install uv
+
+# From repo root: install everything
+uv sync --all-packages
+
+# Run all unit tests
+uv run --package domain-models  pytest packages/domain-models/tests -v
+uv run --package taxonomy-core  pytest packages/taxonomy-core/tests  -v
+uv run --package persistence    pytest packages/persistence/tests    -v
+uv run --package api-service    pytest apps/api-service/tests        -v
+uv run --package worker-service pytest apps/worker-service/tests     -v
+
+# Run services locally (no Docker)
+cp .env.example .env
+uv run --package api-service uvicorn api_service.main:app --reload
+uv run --package worker-service python -m worker_service.main
+
+# Or with Docker
+docker compose -f infra/docker/docker-compose.yml up --build
+```
