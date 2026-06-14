@@ -1,3 +1,5 @@
+import csv
+from pathlib import Path
 from persistence.models.processing_job import ProcessingJobORM
 from persistence.models.receipt import ReceiptImageORM, ReceiptORM
 from persistence.models.receipt_item import ReceiptItemNormalizedORM, ReceiptItemRawORM
@@ -120,3 +122,36 @@ def test_ocr_processor_raises_when_image_missing(db_session):
         assert False, "Expected ValueError"
     except ValueError as exc:
         assert "No image found" in str(exc)
+
+
+def test_ocr_processor_debug_mode_dumps_csv(db_session, tmp_path):
+    receipt_image = tmp_path / "receipt.jpg"
+    receipt_image.write_text("fake image data")
+
+    job = _make_receipt_with_job(db_session, image_path=str(receipt_image))
+
+    processor = OcrProcessor(
+        db_session,
+        FakeOcrClient("Milk 2.99\nTomato 1.49"),
+        FakeClassifier(),
+        debug_mode=True,
+    )
+
+    processor.process(job.id)
+
+    csv_path = tmp_path / "parsing_dump.csv"
+    assert csv_path.exists()
+
+    with open(csv_path, mode="r", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        rows = list(reader)
+
+    assert len(rows) == 2
+    assert rows[0]["raw_text"] == "Milk 2.99"
+    assert rows[0]["normalized_name"] == "milk"
+    assert rows[0]["line_total"] == "2.99"
+    assert rows[0]["category_id"] == "food-fresh-dairy"
+
+    assert rows[1]["raw_text"] == "Tomato 1.49"
+    assert rows[1]["normalized_name"] == "tomato"
+    assert rows[1]["line_total"] == "1.49"
