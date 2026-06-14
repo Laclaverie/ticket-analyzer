@@ -6,6 +6,7 @@ from typing import List
 
 import cv2
 import numpy as np
+from persistence.config_utils import find_repo_root
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,95 @@ class RescaleStep(ImageStep):
             cv2.imwrite(str(output_path), rescaled)
         else:
             shutil.copy2(input_path, output_path)
+
+class YoloDetectionStep(ImageStep):
+    """
+    Detects receipts using a YOLO model and crops the image.
+    If multiple receipts are found, they are stacked vertically.
+    """
+    def __init__(self, model_path: str, confidence: float = 0.25) -> None:
+        self._model_path = model_path
+        self._confidence = confidence
+        self._model = None
+
+    @property
+    def name(self) -> str:
+        return "YOLO_Detection"
+
+    def _get_model(self):
+        if self._model is None:
+            model_path = Path(self._model_path)
+            if not model_path.is_absolute():
+                model_path = find_repo_root() / self._model_path
+
+            try:
+                from ultralytics import YOLO
+                self._model = YOLO(str(model_path))
+            except ImportError:
+                logger.error("ultralytics library not found. YOLO detection will be skipped.")
+                raise ImportError("Please install ultralytics to use YoloDetectionStep.")
+            except Exception as e:
+                logger.error("Failed to load YOLO model from %s: %s", self._model_path, e)
+                raise
+        return self._model
+
+    def apply(self, input_path: Path, output_path: Path) -> None:
+        model_path = Path(self._model_path)
+        if not model_path.is_absolute():
+            # Resolve relative paths against the repository root
+            model_path = find_repo_root() / self._model_path
+
+        if not model_path.exists():
+            logger.warning("YOLO model not found at %s. Copying original image.", model_path)
+            shutil.copy2(input_path, output_path)
+            return
+
+        img = cv2.imread(str(input_path))
+        if img is None:
+            raise ValueError(f"Could not read image at {input_path}")
+
+        model = self._get_model()
+        results = model.predict(img, conf=self._confidence, classes=[0]) # Assuming class 0 is "receipt"
+
+        # Filter for "receipt" class if there are multiple classes
+        # The user mentioned the class is "receipt"
+
+        crops = []
+        for result in results:
+            for box in result.boxes:
+                # box.xyxy is [x1, y1, x2, y2]
+                x1, y1, x2, y2 = map(int, box.xyxy[0])
+                # Ensure coordinates are within image bounds
+                x1, y1 = max(0, x1), max(0, y1)
+                x2, y2 = min(img.shape[1], x2), min(img.shape[0], y2)
+
+                crop = img[y1:y2, x1:x2]
+                if crop.size > 0:
+                    crops.append(crop)
+
+        if not crops:
+            logger.warning("No receipts detected by YOLO. Using original image.")
+            shutil.copy2(input_path, output_path)
+            return
+
+        if len(crops) == 1:
+            cv2.imwrite(str(output_path), crops[0])
+        else:
+            logger.info("YOLO detected %d receipts. Stacking them vertically.", len(crops))
+            # Pad crops to the same width before stacking
+            max_width = max(c.shape[1] for c in crops)
+            padded_crops = []
+            for c in crops:
+                if c.shape[1] < max_width:
+                    pad_width = max_width - c.shape[1]
+                    # Pad with white color
+                    padded = cv2.copyMakeBorder(c, 0, 0, 0, pad_width, cv2.BORDER_CONSTANT, value=[255, 255, 255])
+                    padded_crops.append(padded)
+                else:
+                    padded_crops.append(c)
+
+            stacked = np.vstack(padded_crops)
+            cv2.imwrite(str(output_path), stacked)
 
 class PipelinePreprocessor(BaseImagePreprocessor):
     """Executes a series of ImageSteps, optionally saving intermediary debug images."""
