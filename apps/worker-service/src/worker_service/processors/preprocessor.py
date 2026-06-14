@@ -6,6 +6,7 @@ from typing import List
 
 import cv2
 import numpy as np
+from persistence.config_utils import find_repo_root
 
 logger = logging.getLogger(__name__)
 
@@ -112,9 +113,13 @@ class YoloDetectionStep(ImageStep):
 
     def _get_model(self):
         if self._model is None:
+            model_path = Path(self._model_path)
+            if not model_path.is_absolute():
+                model_path = find_repo_root() / self._model_path
+
             try:
                 from ultralytics import YOLO
-                self._model = YOLO(self._model_path)
+                self._model = YOLO(str(model_path))
             except ImportError:
                 logger.error("ultralytics library not found. YOLO detection will be skipped.")
                 raise ImportError("Please install ultralytics to use YoloDetectionStep.")
@@ -124,8 +129,13 @@ class YoloDetectionStep(ImageStep):
         return self._model
 
     def apply(self, input_path: Path, output_path: Path) -> None:
-        if not Path(self._model_path).exists():
-            logger.warning("YOLO model not found at %s. Copying original image.", self._model_path)
+        model_path = Path(self._model_path)
+        if not model_path.is_absolute():
+            # Resolve relative paths against the repository root
+            model_path = find_repo_root() / self._model_path
+
+        if not model_path.exists():
+            logger.warning("YOLO model not found at %s. Copying original image.", model_path)
             shutil.copy2(input_path, output_path)
             return
 
