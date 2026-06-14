@@ -12,3 +12,9 @@ class Settings(BaseSettings):
     poll_interval_seconds: float = 5.0
     batch_size: int = 10
     retry_delay_seconds: float = 30.0
+
+    # YOLO detection settings
+    yolo_enabled: bool = True
+    use_yolo_pipeline: bool = True  # If True, uses YOLO as the ONLY segmentation step
+    yolo_model_path: str = "data/weights/best.pt"
+    yolo_confidence: float = 0.55
