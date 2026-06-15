@@ -14,6 +14,36 @@ class BaseOcrClient(ABC):
         """Return extracted OCR text for the image path."""
 
 
+class DonutOcrClient(BaseOcrClient):
+    """
+    Experimental OCR client that uses the Donut transformer model.
+    """
+    def __init__(self, model_path: str = "naver-clova-ix/donut-base-finetuned-rvl-cdip") -> None:
+        self._model_path = model_path
+        self._processor = None
+        self._model = None
+
+    def _load_model(self):
+        if self._model is None:
+            try:
+                from transformers import DonutProcessor, VisionEncoderDecoderModel
+                import torch
+
+                device = "cuda" if torch.cuda.is_available() else "cpu"
+                self._processor = DonutProcessor.from_pretrained(self._model_path)
+                self._model = VisionEncoderDecoderModel.from_pretrained(self._model_path)
+                self._model.to(device)
+            except ImportError:
+                logger.error("transformers or torch not found. Donut OCR will be unavailable.")
+                raise ImportError("Please install transformers and torch to use DonutOcrClient.")
+
+    def extract_text(self, image_path: str) -> str:
+        # This is a placeholder for experimental Donut integration
+        # In a real scenario, it would return structured JSON or plain text
+        logger.info("Donut OCR (Experimental) requested for %s", image_path)
+        return f"Donut OCR result for {image_path}"
+
+
 class AutoOcrClient(BaseOcrClient):
     """
     OCR adapter that uses local tesseract when available.

@@ -14,6 +14,7 @@ from taxonomy_core.classifier import BaseClassifier
 from worker_service.processors.base import BaseProcessor
 from worker_service.processors.ocr_client import BaseOcrClient
 from worker_service.processors.preprocessor import BaseImagePreprocessor, NoOpPreprocessor
+from worker_service.processors.layout_segmenter import BaseLayoutSegmenter, NoOpLayoutSegmenter
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,7 @@ class OcrProcessor(BaseProcessor):
         classifier: BaseClassifier,
         store_detector: StoreDetector = StoreDetector(),
         preprocessor: BaseImagePreprocessor = NoOpPreprocessor(),
+        layout_segmenter: BaseLayoutSegmenter = NoOpLayoutSegmenter(),
         debug_mode: bool = False,
     ) -> None:
         self._db = db
@@ -35,6 +37,7 @@ class OcrProcessor(BaseProcessor):
         self._classifier = classifier
         self._store_detector = store_detector
         self._preprocessor = preprocessor
+        self._layout_segmenter = layout_segmenter
         self._debug_mode = debug_mode
 
     @property
@@ -68,22 +71,65 @@ class OcrProcessor(BaseProcessor):
         if processed_image_path != image_path:
             logger.info("Using pre-processed image: %s", processed_image_path)
 
-        text = self._ocr_client.extract_text(processed_image_path)
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        # Layout Segmentation
+        regions = self._layout_segmenter.segment(processed_image_path)
 
-        if not lines:
+        header_regions = [r for r in regions if r.label == "header"]
+        body_regions = [r for r in regions if r.label == "body"]
+        line_item_regions = [r for r in regions if r.label == "line_item"]
+
+        # If no body or line_item regions detected, use all regions as body (fallback)
+        if not body_regions and not line_item_regions and not header_regions:
+            body_regions = regions
+
+        # Sort regions by their vertical position (y1) to ensure text order is preserved
+        header_regions.sort(key=lambda r: r.bbox[1])
+        body_regions.sort(key=lambda r: r.bbox[1])
+        line_item_regions.sort(key=lambda r: r.bbox[1])
+
+        # Extract text from regions
+        header_text = ""
+        for region in header_regions:
+            header_text += self._ocr_client.extract_text(str(region.image_path)) + "\n"
+
+        body_lines = []
+
+        # If we have specific line items, OCR each one individually (most robust)
+        if line_item_regions:
+            logger.info("Processing %d line_item regions.", len(line_item_regions))
+            for region in line_item_regions:
+                line_text = self._ocr_client.extract_text(str(region.image_path)).strip()
+                if line_text:
+                    body_lines.append(line_text)
+        else:
+            # Fallback to whole body segments
+            for region in body_regions:
+                region_text = self._ocr_client.extract_text(str(region.image_path))
+                body_lines.extend([line.strip() for line in region_text.splitlines() if line.strip()])
+
+        # If layout segmentation returned nothing or body_lines is empty, fallback to full image
+        if not body_lines:
+            logger.warning("No text extracted from layout regions. Falling back to full image OCR.")
+            full_text = self._ocr_client.extract_text(processed_image_path)
+            body_lines = [line.strip() for line in full_text.splitlines() if line.strip()]
+
+        if not body_lines:
             logger.warning("OCR returned no text. Using fallback.")
-            lines = [Path(image_path).stem or "unreadable receipt"]
+            body_lines = [Path(image_path).stem or "unreadable receipt"]
 
-        logger.info("Extracted %d lines of text from image.", len(lines))
+        logger.info("Extracted %d lines of text from body regions.", len(body_lines))
 
-        # Detect store and create specialized parser
-        store_type = self._store_detector.detect(lines)
+        # Detect store using header text if available, otherwise use body lines
+        if header_text:
+            store_type = self._store_detector.detect(header_text.splitlines())
+        else:
+            store_type = self._store_detector.detect(body_lines)
+
         logger.info("Detected store type: %s", store_type)
 
         line_parser = ReceiptLineParser(store_type=store_type)
 
-        dump_data = self._replace_extracted_items(receipt.id, lines, line_parser)
+        dump_data = self._replace_extracted_items(receipt.id, body_lines, line_parser)
 
         if self._debug_mode and dump_data:
             receipt_dir = Path(image_path).parent
@@ -97,7 +143,7 @@ class OcrProcessor(BaseProcessor):
             except Exception as e:
                 logger.error("Failed to write parsing dump CSV: %s", e)
 
-        logger.info("Successfully persisted %d lines for receipt %s.", len(lines), receipt.id)
+        logger.info("Successfully persisted %d lines for receipt %s.", len(body_lines), receipt.id)
 
     def _replace_extracted_items(self, receipt_id: str, lines: list[str], line_parser: ReceiptLineParser) -> list[dict]:
         existing_raw_items = (
